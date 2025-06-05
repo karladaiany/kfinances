@@ -4,9 +4,9 @@
   "description": "Frontend da Plataforma de Gestão Financeira Familiar",
   "private": true,
   "scripts": {
-    "dev": "next dev -p 3001",
-    "build": "next build",
-    "start": "next start",
+    "dev": "cross-env NODE_ENV=development next dev -p 3001",
+    "build": "cross-env NODE_ENV=production next build",
+    "start": "cross-env NODE_ENV=production next start",
     "lint": "next lint"
   },
   "dependencies": {
@@ -28,6 +28,7 @@
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
+    "cross-env": "^7.0.3",
     "eslint": "^8.47.0",
     "eslint-config-next": "^13.4.19",
     "typescript": "^5.1.6",

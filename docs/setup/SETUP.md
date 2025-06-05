@@ -10,7 +10,8 @@ Este guia fornece instruções detalhadas para configurar o FinançasPro em ambi
 4. [Configuração do Mercado Pago](#configuração-do-mercado-pago)
 5. [Variáveis de Ambiente](#variáveis-de-ambiente)
 6. [Execução Local](#execução-local)
-7. [Implantação em Produção](#implantação-em-produção)
+7. [Verificando a Instalação / Testes](#verificando-a-instalação--testes)
+8. [Implantação em Produção](#implantação-em-produção)
 
 ## Configuração do Repositório GitHub
 
@@ -99,13 +100,13 @@ git push origin main
 4. Configure o projeto:
    - Framework Preset: Next.js
    - Root Directory: `frontend`
-   - Build Command: `npm run build`
+   - Build Command: `npm run build` (o `cross-env` já está configurado no `package.json` do frontend para definir `NODE_ENV=production`)
    - Output Directory: `.next`
 
 ### Passo 2: Configurar Variáveis de Ambiente
 
 1. Na seção "Environment Variables", adicione todas as variáveis listadas na seção [Variáveis de Ambiente](#variáveis-de-ambiente) deste documento
-2. Certifique-se de usar os valores de produção, especialmente para as chaves de API e strings de conexão
+2. Certifique-se de usar os valores de produção, especialmente para as chaves de API e strings de conexão. `NODE_ENV` será gerenciado pelos scripts via `cross-env`.
 
 ### Passo 3: Configurar Domínio Personalizado
 
@@ -126,7 +127,7 @@ git push origin main
 1. No Dashboard, clique em "Criar aplicação"
 2. Nome da aplicação: "FinançasPro"
 3. Selecione os produtos: "Checkout Pro" e "API de Assinaturas"
-4. URL de redirecionamento: `https://kfinancepro.vercel.app/api/payment/callback`
+4. URL de redirecionamento: `https://kfinancepro.vercel.app/api/payment/callback` (ajuste conforme seu domínio de produção)
 5. Clique em "Criar aplicação"
 
 ### Passo 3: Obter Credenciais
@@ -138,20 +139,19 @@ git push origin main
 ### Passo 4: Configurar Webhook
 
 1. Na página da aplicação, vá para a aba "Webhooks"
-2. Adicione uma URL de notificação: `https://kfinancepro.vercel.app/api/payment/webhook`
+2. Adicione uma URL de notificação: `https://kfinancepro.vercel.app/api/payment/webhook` (ajuste conforme seu domínio de produção)
 3. Selecione os tópicos: "merchant_order", "payment" e "subscription"
 
 ## Variáveis de Ambiente
 
-Crie um arquivo `.env` na raiz do projeto com as seguintes variáveis:
+Crie um arquivo `.env` na **raiz principal** do projeto (no mesmo nível que as pastas `backend` e `frontend`). Este único arquivo `.env` será a fonte da verdade para as configurações locais. A distinção entre `development` e `production` para `NODE_ENV` é gerenciada automaticamente pelos scripts de execução (usando `cross-env`).
 
+Conteúdo exemplo para o arquivo `.env`:
 ```
-# Ambiente
-NODE_ENV=development # ou production
-
 # Servidor
 PORT=3000
-API_URL=http://localhost:3000 # Em produção: https://kfinancepro.vercel.app
+API_URL=http://localhost:3000 # Para desenvolvimento local. Em produção, será o URL do Vercel.
+FRONTEND_URL=http://localhost:3001 # Para desenvolvimento local.
 
 # MongoDB
 MONGODB_URI=mongodb+srv://<username>:<password>@cluster0.mongodb.net/financas-pro?retryWrites=true&w=majority
@@ -179,58 +179,68 @@ TRIAL_DAYS=7
 SUBSCRIPTION_PRICE=30.00
 DATA_RETENTION_DAYS=90
 ```
-
-Para produção, crie um arquivo `.env.production` com as variáveis adequadas ao ambiente de produção.
+**Importante:** Não adicione o arquivo `.env` ao Git. Ele deve estar no seu `.gitignore`.
 
 ## Execução Local
 
 ### Backend
 
 ```bash
-# Entre no diretório do backend
+# Navegue até o diretório do backend
 cd backend
 
-# Instale as dependências
+# Dentro do diretório backend/, instale as dependências:
 npm install
 
 # Execute em modo de desenvolvimento
 npm run dev
 ```
-
-O servidor estará disponível em `http://localhost:3000`.
+O servidor backend estará disponível em `http://localhost:3000`. O comando `npm run dev` utiliza `cross-env` para configurar automaticamente `NODE_ENV=development`.
 
 ### Frontend
 
 ```bash
-# Entre no diretório do frontend
+# Navegue até o diretório do frontend
 cd frontend
 
-# Instale as dependências
+# Dentro do diretório frontend/, instale as dependências:
 npm install
 
 # Execute em modo de desenvolvimento
 npm run dev
 ```
+A aplicação frontend estará disponível em `http://localhost:3001`. O comando `npm run dev` utiliza `cross-env` para configurar automaticamente `NODE_ENV=development`.
 
-A aplicação estará disponível em `http://localhost:3001`.
+**Observação para usuários Windows:** Os comandos `cd`, `npm install`, e `npm run dev` devem funcionar normalmente no Prompt de Comando (cmd.exe), PowerShell, ou Git Bash.
+
+## Verificando a Instalação / Testes
+
+Após configurar o arquivo `.env` na raiz do projeto e instalar as dependências para o backend e o frontend (executando `npm install` em seus respectivos diretórios `backend/` e `frontend/`), você poderá verificar a configuração e executar testes.
+
+Em breve, um arquivo `package.json` será adicionado à raiz do projeto. Este arquivo conterá scripts para executar testes automatizados para o backend e frontend de forma integrada. Por exemplo, você poderá executar `npm test` a partir da raiz do projeto para rodar todos os testes. Fique atento às próximas atualizações para esta funcionalidade.
 
 ## Implantação em Produção
 
-A implantação em produção é automatizada pelo Vercel. Sempre que você fizer um push para a branch `main` do repositório GitHub, o Vercel detectará as alterações e implantará automaticamente.
+A implantação em produção do frontend é automatizada pelo Vercel. Sempre que você fizer um push para a branch `main` (ou a branch configurada) do repositório GitHub, o Vercel detectará as alterações e implantará automaticamente o frontend.
+
+O backend precisará ser implantado separadamente em uma plataforma adequada para Node.js (ex: Heroku, AWS EC2, DigitalOcean, etc.), pois o Vercel é primariamente para frontends estáticos e serverless functions, e nosso backend é um servidor Express tradicional.
 
 ### Verificação Pós-Implantação
 
-Após a implantação, verifique:
+Após a implantação:
 
-1. Se a aplicação está acessível pelo domínio configurado
-2. Se a conexão com o MongoDB está funcionando
-3. Se o sistema de autenticação está operacional
-4. Se a integração com o Mercado Pago está correta
+1. Se a aplicação frontend está acessível pelo domínio configurado no Vercel.
+2. Se o backend está acessível pelo seu respectivo domínio/IP.
+3. Se a conexão entre frontend e backend está funcionando (verifique as URLs de API).
+4. Se a conexão com o MongoDB está funcionando.
+5. Se o sistema de autenticação está operacional.
+6. Se a integração com o Mercado Pago está correta.
 
 ### Monitoramento
 
-O Vercel fornece ferramentas de monitoramento integradas. Além disso, configure alertas no MongoDB Atlas para monitorar o uso do banco de dados e possíveis problemas.
+O Vercel fornece ferramentas de monitoramento para o frontend. Para o backend, utilize as ferramentas de monitoramento da plataforma de hospedagem escolhida. Configure alertas no MongoDB Atlas para monitorar o uso do banco de dados e possíveis problemas.
 
 ---
 
 Para qualquer dúvida ou problema durante a configuração, consulte a documentação adicional em [docs/](../README.md) ou entre em contato com o suporte.
+```
