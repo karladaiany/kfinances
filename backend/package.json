@@ -4,9 +4,9 @@
   "description": "Backend da Plataforma de Gestão Financeira Familiar",
   "main": "src/index.js",
   "scripts": {
-    "start": "cross-env NODE_ENV=production node dist/index.js",
-    "dev": "cross-env NODE_ENV=development nodemon --exec babel-node src/index.js",
-    "build": "cross-env NODE_ENV=production babel src -d dist",
+    "start": "npx cross-env NODE_ENV=production node dist/index.js",
+    "dev": "npx cross-env NODE_ENV=development nodemon --exec babel-node src/index.js",
+    "build": "npx cross-env NODE_ENV=production babel src -d dist",
     "test": "jest",
     "lint": "eslint src"
   },
