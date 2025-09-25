@@ -53,32 +53,54 @@ exports.register = async (req, res, next) => {
     // Salvar usuário
     await newUser.save();
 
-    // Enviar e-mail de verificação
-    const verificationToken = jwt.sign(
-      { userId: newUser._id },
-      process.env.JWT_SECRET,
-      { expiresIn: '1d' }
-    );
+    // Enviar e-mail de verificação (apenas se as credenciais de email estiverem configuradas)
+    if (process.env.EMAIL_USER && process.env.EMAIL_PASSWORD && 
+        process.env.EMAIL_USER !== 'seu_email@gmail.com' && 
+        process.env.EMAIL_PASSWORD !== 'sua_senha_de_app_do_gmail') {
+      
+      const verificationToken = jwt.sign(
+        { userId: newUser._id },
+        process.env.JWT_SECRET,
+        { expiresIn: '1d' }
+      );
 
-    const verificationUrl = `${process.env.API_URL}/api/auth/verify-email/${verificationToken}`;
-    
-    await sendEmail({
-      to: email,
-      subject: 'Verifique seu e-mail - FinançasPro',
-      html: `
-        <h1>Bem-vindo ao FinançasPro!</h1>
-        <p>Olá ${name},</p>
-        <p>Obrigado por se registrar. Por favor, verifique seu e-mail clicando no link abaixo:</p>
-        <a href="${verificationUrl}">Verificar E-mail</a>
-        <p>Este link expira em 24 horas.</p>
-        <p>Atenciosamente,<br>Equipe FinançasPro</p>
-      `
-    });
+      const verificationUrl = `${process.env.API_URL}/api/auth/verify-email/${verificationToken}`;
+      
+      try {
+        await sendEmail({
+          to: email,
+          subject: 'Verifique seu e-mail - FinançasPro',
+          html: `
+            <h1>Bem-vindo ao FinançasPro!</h1>
+            <p>Olá ${name},</p>
+            <p>Obrigado por se registrar. Por favor, verifique seu e-mail clicando no link abaixo:</p>
+            <a href="${verificationUrl}">Verificar E-mail</a>
+            <p>Este link expira em 24 horas.</p>
+            <p>Atenciosamente,<br>Equipe FinançasPro</p>
+          `
+        });
+      } catch (emailError) {
+        logger.warn('Erro ao enviar email de verificação, mas usuário foi criado:', emailError.message);
+        // Em desenvolvimento, marcar email como verificado automaticamente
+        newUser.isEmailVerified = true;
+        await newUser.save();
+      }
+    } else {
+      // Em desenvolvimento sem email configurado, marcar como verificado automaticamente
+      logger.info('Email não configurado - marcando como verificado automaticamente em desenvolvimento');
+      newUser.isEmailVerified = true;
+      await newUser.save();
+    }
 
     // Responder com sucesso
+    const message = newUser.isEmailVerified ? 
+      'Usuário registrado com sucesso. Sua conta está ativa e pronta para uso.' :
+      'Usuário registrado com sucesso. Verifique seu e-mail para ativar sua conta.';
+    
     res.status(201).json({
-      message: 'Usuário registrado com sucesso. Verifique seu e-mail para ativar sua conta.',
-      userId: newUser._id
+      message,
+      userId: newUser._id,
+      emailVerified: newUser.isEmailVerified
     });
   } catch (error) {
     logger.error('Erro no registro:', error);

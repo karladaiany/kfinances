@@ -94,9 +94,10 @@ const FamilySchema = new mongoose.Schema({
 
 // Campos a serem criptografados
 const encryptionKey = process.env.ENCRYPTION_KEY;
+const signingKey = process.env.SIGNING_KEY;
 FamilySchema.plugin(encrypt, {
   encryptionKey: encryptionKey,
-  signingKey: encryptionKey,
+  signingKey: signingKey,
   encryptedFields: ['invites.token']
 });
 

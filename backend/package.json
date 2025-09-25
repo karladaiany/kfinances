@@ -4,9 +4,10 @@
   "description": "Backend da Plataforma de Gestão Financeira Familiar",
   "main": "src/index.js",
   "scripts": {
-    "start": "node dist/index.js",
+    "start": "nodemon --exec babel-node src/index.js",
     "dev": "nodemon --exec babel-node src/index.js",
     "build": "babel src -d dist",
+    "start:prod": "node dist/index.js",
     "test": "jest",
     "lint": "eslint src"
   },

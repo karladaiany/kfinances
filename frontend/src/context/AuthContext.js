@@ -105,6 +105,8 @@ export const AuthProvider = ({ children }) => {
   // Função de registro
   const register = async (name, email, password, inviteCode = null) => {
     try {
+      console.log('Tentando registrar usuário:', { name, email, inviteCode });
+      
       const response = await api.post('/api/auth/register', {
         name,
         email,
@@ -112,11 +114,24 @@ export const AuthProvider = ({ children }) => {
         inviteCode
       });
       
+      console.log('Resposta do servidor:', response.data);
       return { success: true, message: response.data.message };
     } catch (error) {
+      console.error('Erro no registro:', error);
+      console.error('Detalhes do erro:', {
+        status: error.response?.status,
+        data: error.response?.data,
+        message: error.message
+      });
+      
       // Verificar se é erro de convite necessário
       if (error.response && error.response.data.requiresInvite) {
         return { requiresInvite: true };
+      }
+      
+      // Se houver mensagem específica do backend, usar ela
+      if (error.response && error.response.data.message) {
+        throw new Error(error.response.data.message);
       }
       
       throw error;

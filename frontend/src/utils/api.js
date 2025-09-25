@@ -11,9 +11,11 @@ const api = axios.create({
 // Interceptor para adicionar token de autenticação
 api.interceptors.request.use(
   (config) => {
-    // Verificar se estamos no navegador antes de acessar localStorage
+    // Verificar se estamos no navegador antes de acessar cookies
     if (typeof window !== 'undefined') {
-      const token = localStorage.getItem('accessToken');
+      // Usar js-cookie para obter o token
+      const Cookies = require('js-cookie');
+      const token = Cookies.get('accessToken');
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
       }
@@ -39,7 +41,8 @@ api.interceptors.response.use(
       
       try {
         // Tentar atualizar o token
-        const refreshToken = localStorage.getItem('refreshToken');
+        const Cookies = require('js-cookie');
+        const refreshToken = Cookies.get('refreshToken');
         if (!refreshToken) {
           throw new Error('Refresh token não encontrado');
         }
@@ -52,15 +55,16 @@ api.interceptors.response.use(
         const { accessToken } = response.data;
         
         // Salvar novo token
-        localStorage.setItem('accessToken', accessToken);
+        Cookies.set('accessToken', accessToken, { expires: 7 });
         
         // Atualizar cabeçalho e refazer a requisição original
         originalRequest.headers.Authorization = `Bearer ${accessToken}`;
         return api(originalRequest);
       } catch (refreshError) {
         // Se falhar o refresh, limpar tokens e redirecionar para login
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
+        const Cookies = require('js-cookie');
+        Cookies.remove('accessToken');
+        Cookies.remove('refreshToken');
         
         if (typeof window !== 'undefined') {
           window.location.href = '/login?session=expired';
